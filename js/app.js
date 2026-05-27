@@ -696,6 +696,7 @@ function bindEvents() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       closeDetail(); closeCompare(); closeAddPaper();
+      if (typeof closeDownloadManager === 'function') closeDownloadManager();
     }
     if (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
       e.preventDefault();

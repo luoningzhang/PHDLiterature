@@ -75,6 +75,11 @@
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </button>
+      <button class="icon-btn" onclick="openAnalysis()" title="文献分析看板">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </button>
       <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="切换主题">
         <!-- filled by app.js -->
       </button>
@@ -181,6 +186,14 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           重置筛选
         </button>
+        <button class="action-btn" onclick="openDownloadManager()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          批量下载 PDF
+        </button>
+        <button class="action-btn" onclick="openAnalysis()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          文献分析仪表板
+        </button>
         <button class="action-btn danger" onclick="resetDb()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           重置数据库
@@ -229,6 +242,12 @@
 <!-- ══ Search / PDF Modal ════════════════════════════════════════ -->
 <div id="search-overlay" class="overlay" onclick="if(event.target===this)closeSearch()"></div>
 
+<!-- ══ Download Manager Modal ═══════════════════════════════════ -->
+<div id="download-overlay" class="overlay dm-overlay"></div>
+
+<!-- ══ Analysis Dashboard Modal ══════════════════════════════════ -->
+<div id="analysis-overlay" onclick="if(event.target===this)closeAnalysis()"></div>
+
 <!-- ══ Toast Container ═══════════════════════════════════════════ -->
 <div id="toast-container"></div>
 
@@ -236,5 +255,7 @@
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 <script src="js/search.js"></script>
+<script src="js/download-manager.js"></script>
+<script src="js/analysis.js"></script>
 </body>
 </html>
