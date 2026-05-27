@@ -283,7 +283,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
         # 只记录 API 请求，过滤静态文件噪音
-        if "/api/" in (args[0] if args else ""):
+        # args[0] 可能是 HTTPStatus 枚举，需转为字符串再做 in 检查
+        first = str(args[0]) if args else ""
+        if "/api/" in first:
             log.info(f"{self.client_address[0]}  {fmt % args}")
 
     # ── CORS headers ─────────────────────────────────────────────────────────
@@ -305,6 +307,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except Exception as e:
                 log.error(f"API error: {e}")
                 self.json_error(500, str(e))
+        elif parsed.path in ("/favicon.ico", "/apple-touch-icon.png", "/robots.txt"):
+            # 浏览器自动请求，静默返回 204 避免 FileNotFoundError
+            self.send_response(204)
+            self.end_headers()
         else:
             super().do_GET()
 
