@@ -296,6 +296,9 @@ function openDetail(id) {
       overlay.querySelector(`#tab-${btn.dataset.tab}`).classList.add('active');
     });
   });
+
+  // Inject PDF tab (search.js)
+  if (typeof injectPdfSection === 'function') injectPdfSection(id);
 }
 
 function updateCompareToggle(id) {

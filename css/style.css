@@ -429,6 +429,144 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
+/* ─── Server Badge ───────────────────────────────────────────── */
+.server-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; padding: 3px 8px; border-radius: 20px;
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.server-badge .dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+.server-badge.online  { color: var(--success); background: #ECFDF5; border-color: #A7F3D0; }
+.server-badge.offline { color: var(--text3);   background: var(--bg3); }
+.server-badge.online .dot  { background: var(--success); }
+.server-badge.offline .dot { background: var(--text3); animation: none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.search-online-btn {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  padding: 5px 10px; font-size: 12.5px;
+}
+.search-online-btn:hover { background: #1D4ED8; }
+
+/* ─── Search / Offline Modal ─────────────────────────────────── */
+#search-overlay { justify-content: center; align-items: flex-start; padding: 72px 16px 16px; }
+.search-modal {
+  width: 720px; max-width: 100%; max-height: calc(100vh - 90px);
+  background: var(--bg2); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden;
+}
+.search-modal-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.search-modal-header h2 { font-size: 15px; font-weight: 700; }
+.search-source-tag {
+  font-size: 11px; background: #EFF6FF; color: var(--accent);
+  padding: 2px 8px; border-radius: 10px; font-weight: 500;
+}
+.search-modal-header .close-btn { margin-left: auto; }
+.search-input-row {
+  display: flex; gap: 8px; padding: 12px 16px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.search-field {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 10px;
+}
+.search-field svg { color: var(--text3); flex-shrink: 0; }
+.search-field input { flex: 1; border: none; background: transparent; padding: 8px 0; outline: none; font-size: 13.5px; color: var(--text); }
+.search-field input::placeholder { color: var(--text3); }
+#search-limit { padding: 6px 8px; border-radius: var(--radius-sm); width: 64px; }
+
+.search-quick-tags {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.quick-tag {
+  font-size: 11.5px; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text2);
+  cursor: pointer; transition: all .15s;
+}
+.quick-tag:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+.search-results-area { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.search-hint { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13.5px; line-height: 2; }
+.search-loading { text-align: center; padding: 40px; color: var(--text3); }
+.search-error { text-align: center; padding: 30px; color: var(--danger); }
+.search-error button { margin-top: 10px; padding: 6px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); }
+.results-header { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+.results-list { display: flex; flex-direction: column; gap: 8px; }
+
+.result-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 12px; transition: border-color .15s;
+}
+.result-card:hover { border-color: var(--border2); }
+.result-card.already-added { opacity: .6; }
+.result-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+.result-meta { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; flex: 1; }
+.result-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.venue-small { font-size: 11.5px; color: var(--text3); background: var(--bg3); padding: 1px 6px; border-radius: 8px; }
+.cite-count { font-size: 11px; color: var(--text3); }
+.pdf-badge { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 8px; }
+.pdf-badge.oa     { background: #ECFDF5; color: #059669; }
+.pdf-badge.no     { background: #F3F4F6; color: #9CA3AF; }
+.pdf-badge.added  { background: var(--accent-bg); color: var(--accent); }
+.result-title { font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 3px; line-height: 1.4; }
+.result-authors { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+.result-abstract { font-size: 12px; color: var(--text2); line-height: 1.55; margin-bottom: 4px; }
+.result-ids { font-size: 11px; color: var(--text3); }
+.action-btn.sm { padding: 3px 10px; font-size: 11.5px; }
+
+/* ─── Offline notice ─────────────────────────────────────────── */
+.offline-notice { padding: 30px 24px; text-align: center; }
+.offline-icon { margin-bottom: 12px; }
+.offline-notice > p { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
+.offline-steps { background: var(--bg3); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0; text-align: left; }
+.step { display: flex; align-items: baseline; gap: 10px; font-size: 13px; margin-bottom: 8px; }
+.step span { background: var(--accent); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-family: monospace; font-size: 12.5px; }
+.offline-note { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+
+/* ─── Spinner ────────────────────────────────────────────────── */
+.spinner {
+  width: 22px; height: 22px; border: 2px solid var(--border2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite; margin: 0 auto 8px;
+}
+.spinner.sm { width: 14px; height: 14px; border-width: 2px; margin: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── PDF Tab Content ────────────────────────────────────────── */
+.pdf-tab-content { display: flex; flex-direction: column; gap: 14px; }
+.pdf-found { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pdf-not-found { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12.5px; color: #92400E; }
+[data-theme="dark"] .pdf-not-found { background: #2D1B00; border-color: #78350F; color: #FDE68A; }
+.pdf-lookup { display: flex; flex-direction: column; gap: 8px; }
+.pdf-lookup p { font-size: 13px; color: var(--text2); }
+.pdf-lookup small { font-size: 11.5px; color: var(--text3); }
+.pdf-searching { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text3); }
+.pdf-manual { border-top: 1px solid var(--border); padding-top: 10px; }
+.manual-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+.manual-row { display: flex; gap: 6px; }
+.manual-row input { flex: 1; padding: 6px 10px; border-radius: var(--radius-sm); }
+
+/* ─── PDF Manager ────────────────────────────────────────────── */
+.pdf-manager-body { flex: 1; overflow-y: auto; padding: 16px; }
+.pdf-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.pdf-stat { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+.pdf-stat .stat-num { font-size: 20px; font-weight: 700; color: var(--accent); display: block; }
+.pdf-stat span:last-child { font-size: 11.5px; color: var(--text3); }
+.pdf-manager-actions { display: flex; gap: 6px; margin-bottom: 12px; }
+.local-pdf-list { display: flex; flex-direction: column; gap: 4px; }
+.local-pdf-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg3); border-radius: var(--radius-sm); }
+.pdf-filename { flex: 1; font-size: 12.5px; font-family: monospace; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-size { font-size: 11.5px; color: var(--text3); white-space: nowrap; }
+
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }
