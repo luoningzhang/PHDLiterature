@@ -9,6 +9,7 @@ const State = {
   bookmarks: [],
   readStatus: {},
   filter: { cat: 'all', stars: 0, yearMin: 1985, yearMax: 2026, search: '', bookmarkOnly: false, readOnly: false },
+  tagFilters: {},
   sort: 'year_desc',
   view: 'grid',           // grid | list | table
   compareIds: [],
@@ -47,6 +48,12 @@ function getFilteredPapers() {
       if (q) {
         const haystack = [p.title, p.titleZh, (p.authors||[]).join(' '), p.venue, p.descZh, (p.keywords||[]).join(' ')].join(' ').toLowerCase();
         if (!haystack.includes(q)) return false;
+      }
+      if (State.tagFilters && Object.keys(State.tagFilters).length > 0) {
+        const pt = (typeof loadPaperTags === 'function' ? loadPaperTags() : {})[p.id] || {};
+        for (const [sid, lid] of Object.entries(State.tagFilters)) {
+          if (lid && pt[sid] !== lid) return false;
+        }
       }
       return true;
     })
@@ -141,6 +148,7 @@ function renderPaperCard(p) {
     ${hasNote ? `<span class="note-indicator" title="有笔记">${SVG.noteFill}</span>` : ''}
     ${p.url ? `<a class="card-link" href="${p.url}" target="_blank" onclick="event.stopPropagation()" title="原文链接">${SVG.link}</a>` : ''}
   </div>
+  ${typeof renderCustomTagChips === 'function' ? renderCustomTagChips(p.id) : ''}
 </div>`;
 }
 
@@ -299,6 +307,8 @@ function openDetail(id) {
 
   // Inject PDF tab (search.js)
   if (typeof injectPdfSection === 'function') injectPdfSection(id);
+  // Inject custom tag tab (tag-manager.js)
+  if (typeof injectTagSection === 'function') injectTagSection(id);
 }
 
 function updateCompareToggle(id) {

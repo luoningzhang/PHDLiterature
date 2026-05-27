@@ -757,6 +757,201 @@ code { background: var(--bg); border: 1px solid var(--border); border-radius: 4p
 .dm-size-val       { font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
 .dm-size-empty     { color: var(--text3); }
 
+/* ─── Custom Tag Chips (on paper cards) ─────────────────────── */
+.card-custom-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  min-height: 0;
+}
+.custom-tag-chip {
+  font-size: 10.5px;
+  padding: 1.5px 7px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+/* ─── Tag Panel inside detail modal ─────────────────────────── */
+.tm-tag-section { padding: 4px 0; }
+.tm-tag-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border1);
+}
+.tm-tag-row:last-child { border-bottom: none; }
+.tm-tag-row-label {
+  flex-shrink: 0;
+  width: 100px;
+  font-size: 12.5px;
+  color: var(--text2);
+  font-weight: 500;
+  padding-top: 3px;
+}
+.tm-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.tm-chip {
+  padding: 3px 11px;
+  border-radius: 20px;
+  border: 1.5px solid var(--chip-color, var(--border2));
+  color: var(--chip-color, var(--text2));
+  background: transparent;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  line-height: 1.5;
+}
+.tm-chip:hover {
+  background: color-mix(in srgb, var(--chip-color, var(--accent)) 14%, transparent);
+}
+.tm-chip.active {
+  background: var(--chip-color, var(--accent));
+  color: #fff;
+  border-color: var(--chip-color, var(--accent));
+}
+.tm-no-labels { font-size: 12px; color: var(--text3); align-self: center; }
+
+/* ─── Scheme Manager Modal ───────────────────────────────────── */
+#scheme-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 1100;
+  align-items: center;
+  justify-content: center;
+}
+.tm-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  width: min(580px, 96vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+.tm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border1);
+  flex-shrink: 0;
+}
+.tm-title { font-size: 15px; font-weight: 600; color: var(--text1); }
+.tm-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.tm-hint {
+  font-size: 12.5px;
+  color: var(--text3);
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+.tm-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 24px 0; margin: 0; }
+
+/* Scheme block */
+.tm-scheme {
+  border: 1px solid var(--border1);
+  border-radius: 9px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.tm-scheme-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--sidebar-bg, var(--bg));
+  border-bottom: 1px solid var(--border1);
+}
+.tm-scheme-name {
+  flex: 1;
+  font-size: 13.5px;
+  color: var(--text1);
+  outline: none;
+  cursor: text;
+  border-radius: 4px;
+  padding: 1px 4px;
+  min-width: 0;
+}
+.tm-scheme-name:focus { background: var(--hover-bg); }
+.tm-label-count { font-size: 11.5px; color: var(--text3); white-space: nowrap; }
+.danger-hover:hover { color: var(--danger) !important; }
+
+/* Labels list */
+.tm-labels { padding: 8px 14px 10px; }
+.tm-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border1);
+}
+.tm-label-row:last-of-type { border-bottom: none; }
+.tm-label-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tm-label-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text1);
+  outline: none;
+  cursor: text;
+  border-radius: 4px;
+  padding: 1px 4px;
+  min-width: 0;
+}
+.tm-label-name:focus { background: var(--hover-bg); }
+.tm-color-input {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+.tm-color-input.sm { width: 24px; height: 20px; }
+
+/* Add label / add scheme rows */
+.tm-add-label-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border2);
+}
+.tm-add-scheme-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border1);
+}
+.tm-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: var(--text1);
+  font-size: 13px;
+  outline: none;
+  min-width: 0;
+}
+.tm-input:focus { border-color: var(--accent); }
+.tm-input.sm { font-size: 12.5px; padding: 4px 8px; }
+
 /* ─── Upload / Drop Zone ─────────────────────────────────────── */
 .dm-dropzone {
   display: flex;
