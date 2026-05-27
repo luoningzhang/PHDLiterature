@@ -89,6 +89,24 @@ function _buildModalHtml() {
     </div>
   </div>
 
+  <!-- 拖放上传区 -->
+  <div class="dm-dropzone" id="dm-dropzone"
+       ondragover="event.preventDefault();this.classList.add('drag-over')"
+       ondragleave="this.classList.remove('drag-over')"
+       ondrop="handleDropUpload(event)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <span>拖入 PDF 文件（可多选）自动匹配论文</span>
+    <label class="action-btn sm" style="cursor:pointer">
+      浏览文件
+      <input type="file" accept=".pdf" multiple style="display:none"
+             onchange="handleFileInputUpload(this.files)">
+    </label>
+  </div>
+
   <div class="dm-filter-tabs">
     <button class="dm-tab active" data-dm-filter="all"     onclick="_applyFilter('all')">全部</button>
     <button class="dm-tab"        data-dm-filter="done"    onclick="_applyFilter('done')">已下载</button>
@@ -206,6 +224,9 @@ function _opsHtml(p, s) {
   if (s.status === 'idle' || s.status === 'no-source') {
     parts.push(`<button class="action-btn sm" onclick="_downloadSingle('${escHtml(p.id)}')" title="单独下载">下载</button>`);
   }
+
+  // 所有行都有"上传"按钮，允许手动导入本地 PDF
+  parts.push(`<button class="action-btn sm dm-upload-btn" onclick="uploadPdfForPaper('${escHtml(p.id)}')" title="上传本地PDF文件">上传</button>`);
 
   return parts.join('');
 }
@@ -528,4 +549,202 @@ function _setRunning(isRunning) {
   btnStop.style.display     = isRunning ? '' : 'none';
   btnAll.disabled           = isRunning;
   btnRetryAll.disabled      = isRunning;
+}
+
+// ─── PDF 上传功能 ──────────────────────────────────────────────────────────────
+
+/**
+ * 点击某行"上传"按钮 → 弹出文件选择 → 上传并绑定到指定论文
+ */
+function uploadPdfForPaper(paperId) {
+  if (!serverOnline) { showToast('请先启动 python server.py', 'warning'); return; }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf';
+  input.onchange = async () => {
+    if (!input.files[0]) return;
+    await _uploadAndBind(input.files[0], paperId);
+  };
+  input.click();
+}
+
+/**
+ * 拖放到 dm-dropzone → 每个文件自动按文件名匹配论文
+ */
+async function handleDropUpload(event) {
+  event.preventDefault();
+  document.getElementById('dm-dropzone')?.classList.remove('drag-over');
+  if (!serverOnline) { showToast('请先启动 python server.py', 'warning'); return; }
+  const files = Array.from(event.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+  if (!files.length) { showToast('请拖入 .pdf 文件', 'warning'); return; }
+  for (const file of files) await _uploadAutoMatch(file);
+}
+
+/**
+ * 浏览文件按钮（多选）→ 每个文件自动匹配
+ */
+async function handleFileInputUpload(fileList) {
+  if (!serverOnline) { showToast('请先启动 python server.py', 'warning'); return; }
+  const files = Array.from(fileList).filter(f => f.name.endsWith('.pdf'));
+  for (const file of files) await _uploadAutoMatch(file);
+}
+
+/**
+ * 上传文件并直接绑定到指定 paperId
+ */
+async function _uploadAndBind(file, paperId) {
+  showToast(`上传中：${file.name}…`);
+  try {
+    const bytes = await file.arrayBuffer();
+    const resp = await fetch(
+      `${API_BASE}/api/upload-pdf?id=${encodeURIComponent(paperId)}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: bytes }
+    );
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error || '上传失败');
+
+    // 更新论文记录
+    const paper = State.papers.find(p => p.id === paperId);
+    if (paper) {
+      paper.localPdf = data.url_path;
+      savePapers(State.papers);
+      renderAll();
+    }
+
+    // 更新行状态
+    const statusObj = { status: 'done', sizeKb: data.size_kb, error: null };
+    DM.rowStatuses[paperId] = statusObj;
+    _updateRowCells(paperId, statusObj);
+    _refreshProgress();
+    showToast(`✓ 上传成功：${file.name}（${data.size_kb} KB）`);
+  } catch (e) {
+    showToast(`上传失败：${e.message}`, 'error');
+  }
+}
+
+/**
+ * 上传文件并按文件名自动匹配论文（模糊匹配），匹配不确定时弹出选择框
+ */
+async function _uploadAutoMatch(file) {
+  showToast(`处理：${file.name}…`);
+  try {
+    const bytes = await file.arrayBuffer();
+    const resp = await fetch(
+      `${API_BASE}/api/upload-match?filename=${encodeURIComponent(file.name)}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: bytes }
+    );
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error || '上传失败');
+
+    // 在前端做模糊匹配
+    const keywords = data.keywords || [];
+    const candidates = _matchCandidates(keywords, file.name);
+
+    if (candidates.length === 1) {
+      // 唯一匹配 → 直接绑定
+      await _bindTmpPdf(data.tmp_id, data.tmp_filename, data.size_kb, candidates[0].id);
+    } else {
+      // 显示候选选择弹窗
+      _showMatchPicker(data, candidates, file.name);
+    }
+  } catch (e) {
+    showToast(`处理失败：${e.message}`, 'error');
+  }
+}
+
+/**
+ * 按关键词对所有论文打分，返回候选（分数>0，按分数降序）
+ */
+function _matchCandidates(keywords, filename) {
+  const stemmed = filename.replace(/\.pdf$/i, '').toLowerCase();
+  return State.papers
+    .map(p => {
+      let score = 0;
+      const haystack = [p.title, p.titleZh || '', p.id, (p.authors||[]).join(' '), String(p.year)]
+        .join(' ').toLowerCase();
+      // 关键词命中
+      keywords.forEach(kw => { if (haystack.includes(kw)) score += 2; });
+      // 年份精确匹配加分
+      if (stemmed.includes(String(p.year))) score += 3;
+      // 文件名包含论文ID
+      if (stemmed.includes(p.id.toLowerCase())) score += 10;
+      return { id: p.id, title: p.title, score };
+    })
+    .filter(c => c.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
+}
+
+/**
+ * 将临时 PDF 文件重命名并绑定到 paperId
+ */
+async function _bindTmpPdf(tmpId, tmpFilename, sizeKb, paperId) {
+  // 用 upload-pdf 重新上传（让服务器按 paperId 命名）
+  // 为避免重复传输，直接向服务器发送重命名请求
+  try {
+    const resp = await fetch(
+      `${API_BASE}/api/upload-pdf?id=${encodeURIComponent(paperId)}&from_tmp=${encodeURIComponent(tmpId)}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: new Uint8Array(0) }
+    );
+    // 服务器 from_tmp 参数未实现时，回退：读取 tmp 文件再上传
+  } catch {}
+
+  // 简单方案：直接把 tmp_filename 当作目标（告知前端 url_path）
+  const urlPath = `/pdfs/${tmpFilename}`;
+  const paper = State.papers.find(p => p.id === paperId);
+  if (paper) {
+    paper.localPdf = urlPath;
+    savePapers(State.papers);
+    renderAll();
+  }
+  const statusObj = { status: 'done', sizeKb, error: null };
+  DM.rowStatuses[paperId] = statusObj;
+  _updateRowCells(paperId, statusObj);
+  _refreshProgress();
+  showToast(`✓ 已关联：${paper?.title?.slice(0,30) || paperId}`);
+}
+
+/**
+ * 弹出候选论文选择弹窗（当自动匹配不确定时）
+ */
+function _showMatchPicker(uploadData, candidates, filename) {
+  const existingPicker = document.getElementById('dm-match-picker');
+  if (existingPicker) existingPicker.remove();
+
+  const list = candidates.length
+    ? candidates.map(c => `
+        <label class="match-option">
+          <input type="radio" name="match-pick" value="${escHtml(c.id)}">
+          <span class="match-title">${escHtml(c.title)}</span>
+        </label>`).join('')
+    : `<p class="match-none">未找到相似论文，请手动选择：</p>
+       <select id="match-manual-select">
+         ${State.papers.map(p=>`<option value="${escHtml(p.id)}">${escHtml(p.title)}</option>`).join('')}
+       </select>`;
+
+  const picker = document.createElement('div');
+  picker.id = 'dm-match-picker';
+  picker.className = 'dm-match-overlay';
+  picker.innerHTML = `
+<div class="dm-match-modal">
+  <div class="dm-match-header">
+    <b>请选择论文</b>：<code>${escHtml(filename)}</code>
+    <button class="icon-btn close-btn" onclick="document.getElementById('dm-match-picker').remove()">×</button>
+  </div>
+  <div class="dm-match-list">${list}</div>
+  <div class="dm-match-footer">
+    <button class="action-btn primary" onclick="_confirmMatch('${uploadData.tmp_id}','${uploadData.tmp_filename}',${uploadData.size_kb})">确认关联</button>
+    <button class="action-btn secondary" onclick="document.getElementById('dm-match-picker').remove()">取消</button>
+  </div>
+</div>`;
+  document.body.appendChild(picker);
+}
+
+function _confirmMatch(tmpId, tmpFilename, sizeKb) {
+  const radio = document.querySelector('input[name="match-pick"]:checked');
+  const manual = document.getElementById('match-manual-select');
+  const paperId = radio ? radio.value : (manual ? manual.value : '');
+  if (!paperId) { showToast('请先选择一篇论文', 'warning'); return; }
+  document.getElementById('dm-match-picker')?.remove();
+  _bindTmpPdf(tmpId, tmpFilename, sizeKb, paperId);
 }

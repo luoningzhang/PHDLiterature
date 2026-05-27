@@ -404,6 +404,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             else:
                 self.api_extract(paper_id)
 
+        # ── PDF 上传端点 ──────────────────────────────────────────────────────
+        elif path == "/api/upload-pdf":
+            paper_id = params.get("id", "").strip()
+            self.api_upload_pdf(body, paper_id)
+
+        elif path == "/api/upload-match":
+            # 上传PDF并按文件名自动匹配论文
+            filename = params.get("filename", "").strip()
+            self.api_upload_match(body, filename)
+
         else:
             self.json_error(404, "unknown API endpoint")
 
@@ -729,6 +739,71 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             })
         except Exception as e:
             self.json_error(500, f"PDF 文本提取失败: {e}")
+
+    # ── PDF 上传 ──────────────────────────────────────────────────────────────
+    def api_upload_pdf(self, body: bytes, paper_id: str):
+        """
+        接收前端上传的 PDF 字节流，保存到 pdfs/{paper_id}.pdf。
+        若 paper_id 为空则用原始文件名（由 Content-Disposition 或随机 UUID）。
+        """
+        if not body:
+            self.json_error(400, "上传内容为空")
+            return
+        if not body.startswith(b"%PDF"):
+            self.json_error(400, "上传的文件不是有效的 PDF（未检测到 %PDF 文件头）")
+            return
+
+        if not paper_id:
+            paper_id = str(uuid.uuid4())[:8]
+
+        filename = safe_filename(paper_id)
+        filepath = BASE_DIR / PDF_DIR / filename
+        (BASE_DIR / PDF_DIR).mkdir(parents=True, exist_ok=True)
+
+        with open(filepath, "wb") as f:
+            f.write(body)
+
+        size_kb = len(body) // 1024
+        log.info(f"上传保存: {filename} ({size_kb} KB)")
+        self.json_ok({
+            "success":  True,
+            "filename": filename,
+            "url_path": f"/pdfs/{filename}",
+            "size_kb":  size_kb,
+            "paper_id": paper_id,
+        })
+
+    def api_upload_match(self, body: bytes, orig_filename: str):
+        """
+        上传 PDF 并尝试按文件名匹配论文 ID。
+        返回匹配候选列表供前端选择。
+        """
+        if not body or not body.startswith(b"%PDF"):
+            self.json_error(400, "不是有效的 PDF 文件")
+            return
+
+        # 从文件名提取关键词，用于候选匹配（前端会做最终匹配）
+        stem = re.sub(r"\.pdf$", "", orig_filename, flags=re.I)
+        # 保留字母数字和连字符，转小写
+        keywords = re.sub(r"[^a-z0-9\s\-]", " ", stem.lower()).split()
+
+        # 暂存文件（用临时 ID）
+        tmp_id = "tmp_" + str(uuid.uuid4())[:8]
+        tmp_name = safe_filename(tmp_id)
+        tmp_path = BASE_DIR / PDF_DIR / tmp_name
+        (BASE_DIR / PDF_DIR).mkdir(parents=True, exist_ok=True)
+        with open(tmp_path, "wb") as f:
+            f.write(body)
+
+        self.json_ok({
+            "success":      True,
+            "tmp_id":       tmp_id,
+            "tmp_filename": tmp_name,
+            "url_path":     f"/pdfs/{tmp_name}",
+            "size_kb":      len(body) // 1024,
+            "orig_filename": orig_filename,
+            "keywords":     keywords,
+        })
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def _fetch_json(self, url, timeout=10):

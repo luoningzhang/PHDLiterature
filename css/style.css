@@ -757,6 +757,123 @@ code { background: var(--bg); border: 1px solid var(--border); border-radius: 4p
 .dm-size-val       { font-size: 12px; color: var(--text2); font-variant-numeric: tabular-nums; }
 .dm-size-empty     { color: var(--text3); }
 
+/* ─── Upload / Drop Zone ─────────────────────────────────────── */
+.dm-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 2px dashed var(--border2);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 12px 0 8px;
+  color: var(--text3);
+  font-size: 13px;
+  cursor: default;
+  transition: border-color .2s, background .2s, color .2s;
+  user-select: none;
+}
+.dm-dropzone svg { flex-shrink: 0; opacity: .6; }
+.dm-dropzone span { flex: 1; min-width: 160px; text-align: center; }
+.dm-dropzone.drag-over {
+  border-color: var(--accent);
+  background: rgba(99,102,241,.06);
+  color: var(--accent);
+}
+
+/* upload button inside each row */
+.dm-upload-btn { font-size: 11.5px !important; padding: 2px 7px !important; }
+
+/* ─── Match Picker Modal ─────────────────────────────────────── */
+.dm-match-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dm-match-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border1);
+  border-radius: 12px;
+  width: min(520px, 94vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+.dm-match-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border1);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.dm-match-header strong { font-size: 15px; color: var(--text1); flex: 1; }
+.dm-match-header span { font-size: 12px; color: var(--text3); }
+.dm-match-body {
+  padding: 10px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+.match-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  margin-bottom: 5px;
+  transition: background .15s, border-color .15s;
+}
+.match-option:hover { background: var(--hover-bg); border-color: var(--border1); }
+.match-option input[type=radio] { flex-shrink: 0; accent-color: var(--accent); }
+.match-option .mo-info { flex: 1; min-width: 0; }
+.match-option .mo-title { font-size: 13px; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.match-option .mo-meta  { font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+.match-option .mo-score { font-size: 11px; color: var(--accent); flex-shrink: 0; }
+.match-none {
+  font-size: 12.5px;
+  color: var(--text3);
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px dashed var(--border2);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.match-none:hover { border-color: var(--accent); color: var(--accent); }
+.match-manual-select {
+  font-size: 12.5px;
+  color: var(--text2);
+  padding: 8px 10px;
+  margin-top: 4px;
+}
+.match-manual-select select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--input-bg, var(--card-bg));
+  color: var(--text1);
+  font-size: 12.5px;
+}
+.dm-match-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   :root { --sidebar-w: 0px; }
