@@ -749,6 +749,35 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
+def find_free_port(start: int, tries: int = 10) -> int:
+    """从 start 开始向后查找可用端口"""
+    import socket
+    for port in range(start, start + tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("", port))
+                return port
+            except OSError:
+                continue
+    raise OSError(f"端口 {start}–{start+tries-1} 全部被占用")
+
+
+def kill_hint(port: int):
+    """打印杀进程的提示命令"""
+    import platform
+    sys_name = platform.system()
+    print(f"\n  ✗  端口 {port} 已被占用！\n")
+    if sys_name == "Windows":
+        print(f"     请在命令提示符执行：")
+        print(f"       netstat -ano | findstr :{port}")
+        print(f"       taskkill /PID <上面找到的PID> /F\n")
+    else:
+        print(f"     macOS / Linux 一键解决：")
+        print(f"       lsof -ti:{port} | xargs kill -9\n")
+    print(f"     或换个端口启动：")
+    print(f"       python server.py {port + 1}\n")
+
+
 def main():
     os.chdir(BASE_DIR)
     (BASE_DIR / PDF_DIR).mkdir(parents=True, exist_ok=True)
@@ -761,10 +790,23 @@ def main():
         elif arg.isdigit():
             port = int(arg)
 
-    # 使用 ThreadingTCPServer，允许轮询请求与下载并发进行
+    # 尝试绑定端口；若被占用则自动寻找备用端口
     socketserver.ThreadingTCPServer.allow_reuse_address = True
-    with socketserver.ThreadingTCPServer(("", port), Handler) as httpd:
-        url = f"http://localhost:{port}"
+    actual_port = port
+    try:
+        httpd = socketserver.ThreadingTCPServer(("", port), Handler)
+    except OSError:
+        kill_hint(port)
+        try:
+            actual_port = find_free_port(port + 1)
+            print(f"  → 自动切换到备用端口 {actual_port}，正在启动…\n")
+            httpd = socketserver.ThreadingTCPServer(("", actual_port), Handler)
+        except OSError as e:
+            print(f"  ✗  无可用端口：{e}")
+            sys.exit(1)
+
+    url = f"http://localhost:{actual_port}"
+    with httpd:
         print(f"\n  ╔══════════════════════════════════════════════╗")
         print(f"  ║  PHD Literature Manager — 本地服务器 v2.0     ║")
         print(f"  ║  地址: {url:<38}║")
@@ -772,7 +814,6 @@ def main():
         print(f"  ║  pypdf: {'已安装 ✓' if _PYPDF_AVAILABLE else '未安装 (文本提取不可用)':<36}║")
         print(f"  ║  停止: Ctrl+C                                ║")
         print(f"  ╚══════════════════════════════════════════════╝\n")
-        # 延迟 0.8s 打开浏览器，确保服务器已就绪
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
         try:
             httpd.serve_forever()
